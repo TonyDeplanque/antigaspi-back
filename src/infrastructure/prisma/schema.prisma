@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Aliment {
+    codebarre String  @id
+    nom       String
+    imageUrl  String?
+    categorie String?
+    marque    String?
+    produits  Produit[]
+}
+
+model Produit {
+    id               Int     @id @default(autoincrement())
+    aliment          Aliment @relation(fields:[codebarre], references: [codebarre])
+    codebarre        String
+    quantite         Int
+    dateDePeremption DateTime
+    frigo            Frigo    @relation(fields:[frigoId], references: [id])
+    frigoId          Int
+}
+
+model Frigo {
+    id       Int       @id @default(autoincrement())
+    produits Produit[]
+}
+
