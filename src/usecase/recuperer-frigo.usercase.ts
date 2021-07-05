@@ -1,12 +1,16 @@
 import { FrigoRepository } from '../domain/frigo/frigo.repository.interface';
 import { RecupererFrigoCommand } from './commands/recuperer-frigo.command';
 import { Frigo } from '../domain/frigo/frigo';
+import { Inject } from '@nestjs/common';
 
 export class RecupererFrigoUsercase {
-  constructor(private readonly frigoRepository: FrigoRepository) {}
+  constructor(
+    @Inject('FrigoRepository')
+    private readonly frigoRepository: FrigoRepository,
+  ) {}
 
-  execute(recupererFrigo: RecupererFrigoCommand): Frigo {
+  async execute(recupererFrigo: RecupererFrigoCommand): Promise<Frigo> {
     const { id } = recupererFrigo;
-    return this.frigoRepository.recupererFrigo(id);
+    return await this.frigoRepository.recupererFrigo(id);
   }
 }

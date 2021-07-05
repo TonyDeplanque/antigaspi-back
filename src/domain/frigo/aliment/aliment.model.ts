@@ -19,10 +19,7 @@ export class Aliment {
     this.imageUrl = imageUrl;
     this.codebarre = codebarre;
     this.marque = marque;
-    this.validate();
-  }
 
-  validate(): void {
     if (!this.nom) {
       throw Error(AlimentException.NomNotEmptyException);
     }

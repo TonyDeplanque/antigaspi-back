@@ -1,10 +1,14 @@
 import { FrigoRepository } from '../domain/frigo/frigo.repository.interface';
 import { Frigo } from '../domain/frigo/frigo';
+import { Inject } from '@nestjs/common';
 
 export class CreerFrigoUsercase {
-  constructor(private readonly frigoRepository: FrigoRepository) {}
+  constructor(
+    @Inject('FrigoRepository')
+    private readonly frigoRepository: FrigoRepository,
+  ) {}
 
-  execute(): Frigo {
-    return this.frigoRepository.creerFrigo();
+  async execute(): Promise<Frigo> {
+    return await this.frigoRepository.creerFrigo();
   }
 }

@@ -1,44 +1,58 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
+import { Body, Controller, Inject, Param, Post, Put } from '@nestjs/common';
 import { AjouterProduitUsecase } from '../../../usecase/ajouter-produit.usecase';
 import { Produit } from '../../../domain/frigo/produit/produit.model';
-import { AjouterProduitCommand } from '../../../usecase/commands/ajouter-produit .command';
+import { AjouterProduitCommand } from '../../../usecase/commands/ajouter-produit.command';
 import { Aliment } from '../../../domain/frigo/aliment/aliment.model';
 import { ProduitRepository } from '../../../domain/frigo/produit/produit.repository.interface';
 import { FrigoRepository } from '../../../domain/frigo/frigo.repository.interface';
+import { MettreAJourProduitCommand } from '../../../usecase/commands/mettre-a-jour-produit.command';
+import { MettreAJourProduitUsecase } from '../../../usecase/mettre-a-jour-produit.usecase';
 
 @Controller('produits')
 export class ProduitController {
-  private ajouterProduitUsecase: AjouterProduitUsecase;
-
   constructor(
-    @Inject('ProduitRepository')
-    produitRepository: ProduitRepository,
-    @Inject('FrigoRepository')
-    frigoRepository: FrigoRepository,
-  ) {
-    this.ajouterProduitUsecase = new AjouterProduitUsecase(
-      produitRepository,
-      frigoRepository,
-    );
-  }
+    private readonly ajouterProduitUsecase: AjouterProduitUsecase,
+    private readonly mettreAJourProduitUsecase: MettreAJourProduitUsecase,
+  ) {}
 
   @Post('/')
-  ajouterProduit(
+  async ajouterProduit(
     @Body()
     request: {
       frigoId: number;
-      aliment: Aliment;
+      codebarre: string;
       quantite: number;
       dateDePeremption: Date;
     },
-  ): Produit {
-    const { frigoId, aliment, quantite, dateDePeremption } = request;
+  ): Promise<Produit> {
+    const { frigoId, codebarre, quantite, dateDePeremption } = request;
     const ajouterProduitCommand = new AjouterProduitCommand();
-    ajouterProduitCommand.aliment = aliment;
+    ajouterProduitCommand.codebarre = codebarre;
     ajouterProduitCommand.quantite = quantite;
     ajouterProduitCommand.dateDePeremption = dateDePeremption;
     ajouterProduitCommand.frigoId = frigoId;
 
-    return this.ajouterProduitUsecase.execute(ajouterProduitCommand);
+    return await this.ajouterProduitUsecase.execute(ajouterProduitCommand);
+  }
+
+  @Put(':id')
+  async updateProduit(
+    @Param('id') produitId: number,
+    @Body()
+    request: {
+      frigoId: number;
+      quantite: number;
+      dateDePeremption: Date;
+    },
+  ): Promise<Produit> {
+    const { quantite, dateDePeremption } = request;
+    const mettreAJourProduitCommand = new MettreAJourProduitCommand();
+    mettreAJourProduitCommand.produitId = produitId;
+    mettreAJourProduitCommand.quantite = quantite;
+    mettreAJourProduitCommand.dateDePeremption = dateDePeremption;
+
+    return await this.mettreAJourProduitUsecase.execute(
+      mettreAJourProduitCommand,
+    );
   }
 }

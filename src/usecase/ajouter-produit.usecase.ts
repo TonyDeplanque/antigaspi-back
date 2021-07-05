@@ -1,39 +1,46 @@
 import { ProduitRepository } from '../domain/frigo/produit/produit.repository.interface';
-import { AjouterProduitCommand } from './commands/ajouter-produit .command';
+import { AjouterProduitCommand } from './commands/ajouter-produit.command';
 import { FrigoRepository } from '../domain/frigo/frigo.repository.interface';
 import { Produit } from '../domain/frigo/produit/produit.model';
+import { Inject } from '@nestjs/common';
+import { OpenfoodfactsRepository } from '../infrastructure/openfactfoods/openfoodfacts.repository';
+import { Aliment } from '../domain/frigo/aliment/aliment.model';
+import { OpenfoodfactsProduit } from '../infrastructure/openfactfoods/openfoodfacts-produit.model';
 
 export class AjouterProduitUsecase {
   constructor(
+    @Inject('ProduitRepository')
     private readonly produitRepository: ProduitRepository,
+    @Inject('FrigoRepository')
     private readonly frigoRepository: FrigoRepository,
+    @Inject('OpenfoodfactsRepository')
+    private readonly openfactfoodsRepository: OpenfoodfactsRepository,
   ) {}
 
-  execute(ajouterProduitCommand: AjouterProduitCommand): Produit {
-    const { frigoId, aliment, dateDePeremption, quantite } =
+  async execute(
+    ajouterProduitCommand: AjouterProduitCommand,
+  ): Promise<Produit> {
+    const { frigoId, codebarre, dateDePeremption, quantite } =
       ajouterProduitCommand;
 
-    const frigo = this.frigoRepository.recupererFrigo(frigoId);
+    const openfactfoodsReponse = await this.openfactfoodsRepository
+      .recupererProduit(codebarre)
+      .toPromise();
 
-    const produitDejaExistant = frigo.produits.find(
-      (produit) =>
-        produit.aliment.codebarre === aliment.codebarre &&
-        produit.dateDePeremption === dateDePeremption,
+    const openfactfoodsProduit = new OpenfoodfactsProduit(
+      openfactfoodsReponse.data.code,
+      openfactfoodsReponse.data.product,
     );
 
-    if (produitDejaExistant) {
-      const nouvelleQuantite = produitDejaExistant.quantite + quantite;
-      return this.produitRepository.mettreAJourProduit(
-        produitDejaExistant.id,
-        nouvelleQuantite,
-      );
-    } else {
-      return this.produitRepository.ajouterProduit(
-        frigo,
-        aliment,
-        quantite,
-        dateDePeremption,
-      );
-    }
+    const aliment = openfactfoodsProduit.toAliment();
+
+    const frigo = await this.frigoRepository.recupererFrigo(frigoId);
+
+    return await this.produitRepository.ajouterProduit(
+      frigo,
+      aliment,
+      quantite,
+      dateDePeremption,
+    );
   }
 }

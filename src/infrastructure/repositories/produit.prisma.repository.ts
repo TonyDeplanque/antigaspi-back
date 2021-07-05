@@ -4,8 +4,6 @@ import { ProduitRepository } from '../../domain/frigo/produit/produit.repository
 import { Aliment } from '../../domain/frigo/aliment/aliment.model';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { PrismaClient, Prisma } from '@prisma/client';
-import { create } from 'domain';
 
 @Injectable()
 export class ProduitPrismaRepository implements ProduitRepository {
@@ -16,8 +14,8 @@ export class ProduitPrismaRepository implements ProduitRepository {
     aliment: Aliment,
     quantite: number,
     dateDePeremption: Date,
-  ): Produit {
-    const produit = await this.prisma.produit.create({
+  ): Promise<Produit> {
+    return await this.prisma.produit.create({
       data: {
         aliment: {
           connectOrCreate: {
@@ -26,34 +24,37 @@ export class ProduitPrismaRepository implements ProduitRepository {
           },
         },
         quantite,
-        dateDePeremption,
+        dateDePeremption: new Date(dateDePeremption),
         frigo: { connect: { id: frigo.id } },
       },
       include: {
         aliment: true,
+        frigo: true,
       },
     });
-
-    return produit as unknown as Produit;
   }
 
-  mettreAJourProduit(
+  async mettreAJourProduit(
     produitId: number,
     quantite?: number,
     dateDePeremption?: Date,
-  ): Produit {
-    const produitDejaExistant = [].find((produit) => produit.id === produitId);
-
-    if (produitDejaExistant) {
-      if (quantite) {
-        produitDejaExistant.quantite = quantite;
-      }
-
-      if (dateDePeremption) {
-        produitDejaExistant.dateDePeremption = dateDePeremption;
-      }
+  ): Promise<Produit> {
+    const data = {} as any;
+    if (quantite) {
+      data.quantite = quantite;
     }
 
-    return produitDejaExistant;
+    if (dateDePeremption) {
+      data.dateDePeremption = new Date(dateDePeremption);
+    }
+
+    return await this.prisma.produit.update({
+      where: { id: Number(produitId) },
+      data,
+      include: {
+        aliment: true,
+        frigo: true,
+      },
+    });
   }
 }

@@ -8,11 +8,11 @@ export interface ProduitRepository {
     aliment: Aliment,
     quantite: number,
     dateDePeremption: Date,
-  ): Produit;
+  ): Promise<Produit>;
 
   mettreAJourProduit(
     produitId: number,
     quantite?: number,
     dateDePeremption?: Date,
-  ): Produit;
+  ): Promise<Produit>;
 }

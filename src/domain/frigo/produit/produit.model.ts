@@ -17,10 +17,7 @@ export class Produit {
     this.quantite = quantite;
     this.dateDePeremption = dateDePeremption;
     this.id = id;
-    this.validate();
-  }
 
-  validate(): void {
     if (this.quantite <= 0) {
       throw Error(ProduitException.QuantiteNotEmptyException);
     }
